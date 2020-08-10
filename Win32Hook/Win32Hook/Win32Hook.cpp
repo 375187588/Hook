@@ -4,6 +4,8 @@
 #include "framework.h"
 #include "Win32Hook.h"
 
+#pragma comment(lib,"hooktest.lib")
+
 #define MAX_LOADSTRING 100
 HHOOK g_hMouseHook;
 HHOOK g_hKeyHook;
@@ -18,6 +20,9 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+extern "C" __declspec(dllimport)  BOOL InstallMouseHook();
+extern "C" __declspec(dllimport)  BOOL InstallKeyHook();
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -151,6 +156,7 @@ LRESULT CALLBACK KeyBoard_Proc(int nCode, WPARAM wParam, LPARAM lParam)
 //进程内钩子 
 //1:安装鼠标钩子 
 //2：安装键盘钩子
+//3:安装全局钩子 必须要一个dll动态库文件
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -163,14 +169,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_CREATE:
 		//安装鼠标钩子
-		g_hMouseHook = SetWindowsHookEx(WH_MOUSE, Mouse_Proc,NULL,GetCurrentThreadId());
-		g_hKeyHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoard_Proc, NULL, GetCurrentThreadId());
+		//g_hMouseHook = SetWindowsHookEx(WH_MOUSE, Mouse_Proc,NULL,GetCurrentThreadId());
+		//g_hKeyHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoard_Proc, NULL, GetCurrentThreadId());
+		InstallMouseHook();
+		InstallKeyHook();
 		break;
 	case WM_MOUSEMOVE:
 	{
 		int x = LOWORD(lParam), y = HIWORD(lParam);
 		TCHAR buffer[256];
-		wsprintf(buffer, L"当前鼠标坐标(%d,%d)", x, y);
+		wsprintf(buffer, TEXT("当前鼠标坐标(%d,%d)"), x, y);
 		SetWindowText(hWnd, buffer);
 		break;
 	}
